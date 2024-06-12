@@ -2,6 +2,27 @@ import GitAccessor
 from CodeBERT import CodeBERT
 from transformers import RobertaTokenizer, RobertaForSequenceClassification
 from transformers import PLBartTokenizer, PLBartForConditionalGeneration
+from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+import tokenize
+import io
+#from transformers import HfApi
+from huggingface_hub import HfApi, list_models
+import torch
+
+def pythonTokenizer(line):
+    result= []
+    line = io.StringIO(line) 
+    
+    for toktype, tok, start, end, line in tokenize.generate_tokens(line.readline):
+        if (not toktype == tokenize.COMMENT):
+            if toktype == tokenize.STRING:
+                result.append("CODE_STRING")
+            elif toktype == tokenize.NUMBER:
+                result.append("CODE_INTEGER")
+            elif (not tok=="\n") and (not tok=="    "):
+                result.append(str(tok))
+    return ' '.join(result)
 
 def main():
     # Your code here
@@ -79,6 +100,7 @@ def main():
         """
 
     # Initialize the CodeBERT model
+    '''
     codebert1 = CodeBERT(model_name = "uclanlp/plbart-base", 
                          tokenizer = PLBartTokenizer, 
                          model = PLBartForConditionalGeneration)
@@ -101,6 +123,52 @@ def main():
     #outputs = codebert1.generateSummary(inputs)
     #print("The summary is: ")
     #print(outputs)
+    '''
+
+    token = "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"
+
+    #model_id = "mistralai/Codestral-22B-v0.1"
+    #tokenizer = AutoTokenizer.from_pretrained(model_id, use_auth_token=token)
+    #model = AutoModelForCausalLM.from_pretrained(model_id, use_auth_token=token)
+    
+    # Check if MPS is available and set the device
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    else:
+        device = torch.device("cpu")
+
+    #config = AutoConfig.from_pretrained("google-bert/bert-base-cased")
+    #model = AutoModelForCausalLM.from_config(config)
+
+    # Use root method
+    models = list_models()
+
+    #api = HfApi()
+    #models = api.list_models(search="mistralai")
+    #for model in models:
+    #    print(model.modelId)
+
+    import pdb; pdb.set_trace()
+
+    model_name = "google-bert/bert-base-cased" #"mistralai/Codestral-22B-v0.1"
+
+    try:
+        # Load the tokenizer and model
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(model_name).to(device)
+        print("Model and tokenizer loaded successfully.")
+    except KeyError as e:
+        print(f"KeyError: {e}. Please check if the model '{model_name}' exists and is spelled correctly.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    pdb.set_trace()
+
+    text = "Hello my name is"
+    inputs = tokenizer(text, return_tensors="pt")
+
+    outputs = model.generate(**inputs, max_new_tokens=20)
+    print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 if __name__ == "__main__":
     main()
