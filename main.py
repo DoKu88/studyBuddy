@@ -1,19 +1,22 @@
-import GitAccessor
-from CodeBERT import CodeBERT
-from transformers import RobertaTokenizer, RobertaForSequenceClassification
-from transformers import PLBartTokenizer, PLBartForConditionalGeneration
-from transformers import AutoTokenizer, AutoModelWithLMHead, SummarizationPipeline
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-from transformers import T5Tokenizer, T5ForConditionalGeneration
-import tokenize
-import io
-#from transformers import HfApi
-from huggingface_hub import HfApi, list_models
-import torch
-import sys
+from ChatGPTInterface import ChatGPTInterface
+
+def read_file(file_path):
+    with open(file_path, 'r') as file:
+        return file.read()
+    
 
 def main():
-    pass
+
+    fileText = read_file("./data/randomFile.cpp")
+
+    #print(fileText)
+
+    llmInterface = ChatGPTInterface()
+    print(llmInterface.get_model_name())
+
+    result = llmInterface.is_code_correct(fileText, "Does this use the leaky bucket algorithm?")
+    resultDict = result.to_dict()
+    print(resultDict['content'])
 
 if __name__ == "__main__":
     main()
